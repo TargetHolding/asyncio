@@ -678,6 +678,30 @@ class StreamReader:
 
         return b''.join(blocks)
 
+    @asyncio.coroutine
+    def readinto(self, buffer, offset=0, n=None):
+        if self._exception is not None:
+            raise self._exception
+        elif self._eof:
+            return 0
+        elif not self._buffer:
+            yield from self._wait_for_data('read')
+        if n is None:
+            n = len(buffer)
+        read = min(n, len(self._buffer))
+        buffer[offset:n] = self._buffer[:read]
+        del self._buffer[:read]
+        return read
+
+    @asyncio.coroutine
+    def readinto_exactly(self, buffer, offset=0, n=None):
+        if n is None:
+            n = len(buffer)
+        while offset < n:
+            if self._eof:
+                raise asyncio.IncompleteReadError(buffer[:offset], n)
+            offset += yield from self.readinto(buffer, offset, n - offset)
+
     if compat.PY35:
         @coroutine
         def __aiter__(self):
