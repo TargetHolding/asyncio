@@ -678,7 +678,7 @@ class StreamReader:
 
         return b''.join(blocks)
 
-    @asyncio.coroutine
+    @coroutine
     def readinto(self, buffer, offset=0, n=None):
         if self._exception is not None:
             raise self._exception
@@ -693,13 +693,13 @@ class StreamReader:
         del self._buffer[:read]
         return read
 
-    @asyncio.coroutine
+    @coroutine
     def readinto_exactly(self, buffer, offset=0, n=None):
         if n is None:
             n = len(buffer)
         while offset < n:
             if self._eof:
-                raise asyncio.IncompleteReadError(buffer[:offset], n)
+                raise IncompleteReadError(buffer[:offset], n)
             offset += yield from self.readinto(buffer, offset, n - offset)
 
     if compat.PY35:
